@@ -18,9 +18,9 @@ const AnimationSteps = () => {
                 </tr>
             </thead>
             <tbody>
-                {animation.map((el) => {
+                {animation.map((el, i) => {
                     return (
-                        <tr key={el.id} className="p-2 border-b hover:bg-gray-100 cursor-pointer">
+                        <tr key={i} className="p-2 border-b hover:bg-gray-100 cursor-pointer">
                             <td className="text-gray-500 p-2 capitalize">{el.type}</td>
                             <td className="text-gray-700 p-2">{JSON.stringify(el.nodes)}</td>
                             <td className="text-gray-700 p-2">{JSON.stringify(el.vector)}</td>

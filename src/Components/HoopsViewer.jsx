@@ -16,6 +16,10 @@ export default class HoopsViewer extends Component {
     this.hwvReady = this.hwvReady.bind(this);
     this.changeTab = this.changeTab.bind(this);
     this.changeOperator = this.changeOperator.bind(this);
+    this.handleAnimation = this.handleAnimation.bind(this);
+
+    this.animationSteps = null;
+    this.animationController = null;
 
     this.state = {
       hwv: null,
@@ -31,6 +35,10 @@ export default class HoopsViewer extends Component {
     this.setState({
       hwv: newHWV,
     }, () => {
+
+      this.animationSteps = new AnimationSteps(this.state.hwv);
+      this.animationController = new AnimationController(this.state.hwv, this.animationSteps);
+
       this.state.hwv.setCallbacks({
         sceneReady: () => {
           this.setState({
@@ -46,8 +54,8 @@ export default class HoopsViewer extends Component {
 
           this.setState({
             isStructureReady: true,
+            defaultCamera: hwv.view.getCamera().toJson(),
           });
-          // console.log('Model structure is ready');
         },
         camera: () => {
           this.setState({
@@ -80,6 +88,23 @@ export default class HoopsViewer extends Component {
       currentTab: newTab,
     });
   }
+
+  handleAnimation = async () => {
+    if (!this.state.hwv || !this.animationSteps || !this.animationController) return;
+
+    // const animationSteps = new AnimationSteps(this.state.hwv);
+    // const animationController = new AnimationController(this.state.hwv, animationSteps);
+
+    const { animation } = this.context;
+
+    for (const a of animation) {
+      this.animationSteps.addStep(a);
+    }
+
+    this.animationController.rewind();
+    await this.animationController.play();
+  }
+
 
   render() {
 
@@ -132,21 +157,6 @@ export default class HoopsViewer extends Component {
       }
     </div>;
 
-    const handleAnimation = async () => {
-      if (!this.state.hwv) return;
-      const animationSteps = new AnimationSteps(this.state.hwv);
-      const animationController = new AnimationController(this.state.hwv, animationSteps);
-
-      const { animation } = this.context;
-
-      for (const a of animation) {
-        animationSteps.addStep(a);
-      }
-
-      animationController.rewind();
-      await animationController.play();
-    }
-
     const { hwv } = this.state;
 
     return (
@@ -154,7 +164,7 @@ export default class HoopsViewer extends Component {
         <div className="flex-1 border-end relative">
           <ViewerComponent modelUri={model} hwvReady={this.hwvReady}></ViewerComponent>
           {(this.context.animation && this.context.animation.length > 0) && <div className='absolute bottom-0 start-0 w-full flex justify-center items-center'>
-            <button className="btn btn-primary p-3 cursor-pointer" onClick={handleAnimation}>
+            <button className="btn btn-primary p-3 cursor-pointer" onClick={this.handleAnimation}>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
                 <path d="M6.3 2.84A1.5 1.5 0 0 0 4 4.11v11.78a1.5 1.5 0 0 0 2.3 1.27l9.344-5.891a1.5 1.5 0 0 0 0-2.538L6.3 2.841Z" />
               </svg>
