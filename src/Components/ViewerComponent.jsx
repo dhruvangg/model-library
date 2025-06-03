@@ -1,7 +1,6 @@
 import { Component } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import * as Communicator from '../lib/hoops-web-viewer-monolith.mjs';
-import { getTreeData } from '../lib/functions';
 import { HoopsContext } from '../Context/HoopsContext';
 
 class ViewerComponent extends Component {

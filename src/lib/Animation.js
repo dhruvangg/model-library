@@ -1,5 +1,16 @@
 import * as Communicator from "./hoops-web-viewer-monolith.mjs";
 
+function hexToColor(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (result !== null) {
+        const r = parseInt(result[1], 16);
+        const g = parseInt(result[2], 16);
+        const b = parseInt(result[3], 16);
+        return new Communicator.Color(r, g, b);
+    }
+    return Communicator.Color.black();
+}
+
 export class KeyframeAnimation {
     constructor(viewer, animationName) {
         this.viewer = viewer;
@@ -74,49 +85,55 @@ export class KeyframeAnimation {
         Communicator.Animation.keyframeCamera(startTime + duration, targetCamera, this.animation);
     }
 
-    async addColorAnimation(nodeId, startTime, duration, startColor, endColor) {
-        const channelName = `Color-${nodeId}`;
-        const buffer = new Communicator.Animation.KeyframeBuffer(Communicator.Animation.KeyType.Vec3);
-        const sampler = new Communicator.Animation.Sampler(buffer, Communicator.Animation.InterpolationType.Linear);
-        const channel = this.animation.createNodeChannel(channelName, nodeId, Communicator.Animation.NodeProperty.Color, sampler);
+    async addColorAnimation(nodes, startTime, duration, startColor, endColor) {
+        for (const nodeId of nodes) {
+            const channelName = `Color-${nodeId}`;
+            const buffer = new Communicator.Animation.KeyframeBuffer(Communicator.Animation.KeyType.Vec3);
+            const sampler = new Communicator.Animation.Sampler(buffer, Communicator.Animation.InterpolationType.Linear);
+            const channel = this.animation.createNodeChannel(channelName, nodeId, Communicator.Animation.NodeProperty.Color, sampler);
 
-        if (!startColor) {
-            const nodeColor = await this.viewer.model.getNodesEffectiveFaceColor([nodeId]);
-            startColor = nodeColor[0];
+            if (!startColor) {
+                const nodeColor = await this.viewer.model.getNodesEffectiveFaceColor([nodeId]);
+                startColor = nodeColor[0];
+            }
+
+            channel.sampler.buffer.insertVec3Keyframe(startTime, startColor.r, startColor.g, startColor.b);
+            channel.sampler.buffer.insertVec3Keyframe(startTime + duration, endColor.r, endColor.g, endColor.b);
         }
-
-        channel.sampler.buffer.insertVec3Keyframe(startTime, startColor.r, startColor.g, startColor.b);
-        channel.sampler.buffer.insertVec3Keyframe(startTime + duration, endColor.r, endColor.g, endColor.b);
     }
 
-    async addBlinkAnimation(nodeId, startTime, duration) {
-        const channelName = `Blink-${nodeId}`;
-        let nodeColor;
-        const children = this.viewer.model.getNodeChildren(nodeId);
+    async addBlinkAnimation(nodes, startTime, duration) {
 
-        if (0 == children.length) {
-            const parentNode = this.viewer.model.getNodeParent(nodeId);
-            nodeColor = await this.viewer.model.getNodesEffectiveFaceColor([parentNode]);
-        } else {
-            nodeColor = await this.viewer.model.getNodesEffectiveFaceColor([nodeId]);
-        }
+        for (const nodeId of nodes) {
 
-        const buffer = new Communicator.Animation.KeyframeBuffer(Communicator.Animation.KeyType.Vec3);
-        const sampler = new Communicator.Animation.Sampler(buffer, Communicator.Animation.InterpolationType.Linear);
-        const channel = this.animation.createNodeChannel(channelName, nodeId, Communicator.Animation.NodeProperty.Color, sampler);
+            const channelName = `Blink-${nodeId}`;
+            let nodeColor;
+            const children = this.viewer.model.getNodeChildren(nodeId);
 
-        let color = Communicator.Color.red();
-
-        for (let i = 0; i <= 6; i++) {
-            const time = startTime + duration / 6 * i;
-            if (i % 2 == 0) {
-                channel.sampler.buffer.insertVec3Keyframe(time, nodeColor[0].r, nodeColor[0].g, nodeColor[0].b)
+            if (0 == children.length) {
+                const parentNode = this.viewer.model.getNodeParent(nodeId);
+                nodeColor = await this.viewer.model.getNodesEffectiveFaceColor([parentNode]);
             } else {
-                channel.sampler.buffer.insertVec3Keyframe(time, color.r, color.g, color.b);
+                nodeColor = await this.viewer.model.getNodesEffectiveFaceColor([nodeId]);
             }
-        }
 
-        channel.sampler.buffer.insertVec3Keyframe(startTime + duration, nodeColor[0].r, nodeColor[0].g, nodeColor[0].b);
+            const buffer = new Communicator.Animation.KeyframeBuffer(Communicator.Animation.KeyType.Vec3);
+            const sampler = new Communicator.Animation.Sampler(buffer, Communicator.Animation.InterpolationType.Linear);
+            const channel = this.animation.createNodeChannel(channelName, nodeId, Communicator.Animation.NodeProperty.Color, sampler);
+
+            let color = Communicator.Color.red();
+
+            for (let i = 0; i <= 6; i++) {
+                const time = startTime + duration / 6 * i;
+                if (i % 2 == 0) {
+                    channel.sampler.buffer.insertVec3Keyframe(time, nodeColor[0].r, nodeColor[0].g, nodeColor[0].b)
+                } else {
+                    channel.sampler.buffer.insertVec3Keyframe(time, color.r, color.g, color.b);
+                }
+            }
+
+            channel.sampler.buffer.insertVec3Keyframe(startTime + duration, nodeColor[0].r, nodeColor[0].g, nodeColor[0].b);
+        }
     }
 
     async addFadeoutAnimation(nodes, startTime, duration) {
@@ -259,7 +276,7 @@ export class AnimationController {
                 case "camera":
                     const camera = Communicator.Camera.fromJson(step.camera);
                     this.keyFrameAnimation.addCameraAnimation(startTime, duration, camera, lastCamera);
-                    lastCamera = camera; 
+                    lastCamera = camera;
                     break;
                 case "translation":
                     await this.keyFrameAnimation.addTranslation(step.nodes, startTime, duration, step.vector, step.distance);
@@ -268,10 +285,10 @@ export class AnimationController {
                     this.keyFrameAnimation.addRotation(step.nodes, startTime, duration, step.axis, step.center, step.angle);
                     break;
                 case "color":
-                    await this.keyFrameAnimation.addColorAnimation(step.node, startTime, duration, step.startColor, step.endColor);
+                    await this.keyFrameAnimation.addColorAnimation(step.nodes, startTime, duration, step.startColor, hexToColor(step.endColor));
                     break;
                 case "blink":
-                    await this.keyFrameAnimation.addBlinkAnimation(step.node, startTime, duration);
+                    await this.keyFrameAnimation.addBlinkAnimation(step.nodes, startTime, duration);
                     break;
                 case "fadeout":
                     await this.keyFrameAnimation.addFadeoutAnimation(step.nodes, startTime, duration);

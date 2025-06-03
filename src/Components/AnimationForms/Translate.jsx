@@ -3,7 +3,7 @@ import { useHoopsContext } from "../../Context/HoopsContext"
 import { useEffect } from "react"
 import { useAnimationContext } from "../../Context/AnimationContext"
 
-function Translate() {
+export const Translate = () => {
     const { selectedNodeIds } = useHoopsContext()
     const { addAnimation } = useAnimationContext();
 
@@ -13,13 +13,13 @@ function Translate() {
         const currentValues = getValues();
         reset({
             ...currentValues,
-            parts: selectedNodeIds.join(","),
+            nodes: selectedNodeIds.join(","),
         })
     }, [selectedNodeIds])
 
 
     const createTranslateAnimation = (data) => {
-        const parts = data.parts.split(",").map(part => Number(part.trim()));
+        const nodes = data.nodes.split(",").map(part => Number(part.trim()));
         const direction = {
             x: data.direction === 'X' ? 1 : 0,
             y: data.direction === 'Y' ? 1 : 0,
@@ -30,7 +30,7 @@ function Translate() {
         const delay = parseFloat(data.delay);
         const animation = {
             type: "translation",
-            nodes: parts,
+            nodes,
             vector: direction,
             distance: distance,
             duration: duration,
@@ -45,7 +45,7 @@ function Translate() {
         <form className="p-4 bg-white" onSubmit={handleSubmit(createTranslateAnimation)}>
             <div className="mb-4">
                 <label className="block mb-2 text-sm font-medium text-gray-900">Parts:</label>
-                <input {...register("parts", { required: true })} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-4" placeholder="Part IDs (comma separated)" />
+                <input {...register("nodes", { required: true })} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-4" placeholder="Part IDs (comma separated)" />
             </div>
             <div className="mb-4">
                 <label className="block mb-2 text-sm font-medium text-gray-900">Translation Vector:</label>
@@ -80,5 +80,3 @@ function Translate() {
         </form>
     )
 }
-
-export default Translate

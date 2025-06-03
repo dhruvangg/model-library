@@ -1,19 +1,34 @@
 import { useForm } from "react-hook-form";
 import { useAnimationContext } from "../../Context/AnimationContext";
+import { useHoopsContext } from "../../Context/HoopsContext";
+import { useEffect } from "react";
 
-export function Camera({ viewer }) {
+export const Blink = () => {
+    const { selectedNodeIds } = useHoopsContext()
     const { addAnimation } = useAnimationContext()
-    const { register, handleSubmit } = useForm()
+    const { register, handleSubmit, formState: { errors }, reset, getValues } = useForm()
+
+    useEffect(() => {
+        const currentValues = getValues();
+        reset({
+            ...currentValues,
+            nodes: selectedNodeIds.join(","),
+        })
+    }, [selectedNodeIds])
 
     const createCameraAnimation = (data) => {
-        const camera = viewer.view.getCamera()
+        const nodes = data.nodes.split(",").map(part => Number(part.trim()));
         const duration = parseFloat(data.duration);
         const delay = parseFloat(data.delay);
-        addAnimation({ type: 'camera', startTime: delay, duration: duration, camera: camera.toJson() });
+        addAnimation({ type: 'blink', startTime: delay, duration: duration, nodes });
     }
 
     return (
         <form className="p-4 bg-white" onSubmit={handleSubmit(createCameraAnimation)}>
+            <div className="mb-4">
+                <label className="block mb-2 text-sm font-medium text-gray-900">Parts:</label>
+                <input {...register("nodes", { required: true })} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-4" placeholder="Part IDs (comma separated)" />
+            </div>
             <div className="mb-4">
                 <label className="block mb-2 text-sm font-medium text-gray-900">Duration (s):</label>
                 <input type="number" {...register("duration", { required: true })} min={1} name="duration" defaultValue={1} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" placeholder="Animation duration in milliseconds" />

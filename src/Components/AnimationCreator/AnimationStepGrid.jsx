@@ -1,6 +1,6 @@
 import { useAnimationContext } from "../../Context/AnimationContext"
 
-const AnimationSteps = () => {
+const AnimationStepGrid = () => {
     const { animation } = useAnimationContext();
 
     if (!animation || animation.length === 0) return null;
@@ -35,4 +35,4 @@ const AnimationSteps = () => {
     )
 }
 
-export default AnimationSteps
+export default AnimationStepGrid

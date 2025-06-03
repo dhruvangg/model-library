@@ -1,8 +1,6 @@
 import React, { useState } from "react"
-import Translate from "../AnimationForms/Translate";
-import { HomeIcon, TranslateIcon, CameraIcon, BlinkIcon, FadeOutIcon, RotateIcon } from "../Icons";
-import Camera from "../AnimationForms/Camera";
-import AnimationSteps from "./AnimationSteps";
+import { HomeIcon, TranslateIcon, CameraIcon, BlinkIcon, FadeOutIcon, RotateIcon, ColorIcon } from "../Icons";
+import { Blink, Camera, Translate, Fade, Color } from "../AnimationForms";
 
 const Items = [
     { id: 1, name: "home", icon: <HomeIcon /> },
@@ -10,32 +8,26 @@ const Items = [
     { id: 3, name: "translate", icon: <TranslateIcon /> },
     { id: 4, name: "rotate", icon: <RotateIcon />, },
     { id: 5, name: "fadeOut", icon: <FadeOutIcon /> },
-    { id: 6, name: "blink", icon: <BlinkIcon /> }
+    { id: 6, name: "blink", icon: <BlinkIcon /> },
+    { id: 7, name: "color", icon: <ColorIcon /> },
 ]
 
 function AnimationCreatorPanel({ viewer }) {
     const [activeItem, setActiveItem] = useState(null)
     const handleItemClick = (item) => setActiveItem(activeItem === item ? null : item);
 
-    // const rootNode = viewer.model.getAbsoluteRootNode();
-    // console.log(viewer.model.setNodesVisibility(rootNode, true));
-
     return (
-        <div className="flex flex-col h-full justify-between">
-            <div>
-                <ul className='flex'>
-                    {Items.map((item) => (
-                        <li key={item.id}>
-                            <button className={`p-2 cursor-pointer ${activeItem === item.id ? 'bg-blue-500 text-white' : ''}`} onClick={() => handleItemClick(item.name)}>
-                                {item.icon}
-                            </button>
-                        </li>
-                    ))}
-                </ul>
-                <RenderAnimationForm activeItem={activeItem} viewer={viewer} />
-            </div>
-
-            <AnimationSteps />
+        <div className="flex flex-col max-h-[70vh] overflow-y-auto">
+            <ul className='flex'>
+                {Items.map((item) => (
+                    <li key={item.id}>
+                        <button className={`p-2 cursor-pointer ${activeItem === item.name ? 'bg-blue-500 text-white' : ''}`} onClick={() => handleItemClick(item.name)}>
+                            {item.icon}
+                        </button>
+                    </li>
+                ))}
+            </ul>
+            <RenderAnimationForm activeItem={activeItem} viewer={viewer} />
         </div>
     )
 }
@@ -54,9 +46,11 @@ function RenderAnimationForm({ activeItem, ...rest }) {
         case 'rotate':
             return <div>Rotate</div>;
         case 'fadeOut':
-            return <div>FadeOut</div>;
+            return <Fade />;
         case 'blink':
-            return <div>Blink</div>;
+            return <Blink />;
+        case 'color':
+            return <Color />;
         default:
             return null;
     }
