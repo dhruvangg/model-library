@@ -5,6 +5,7 @@ import ModelTreeComponent from './ModelTreeComponent';
 import * as Communicator from '../lib/hoops-web-viewer-monolith.mjs';
 import AnimationCreatorPanel from './AnimationCreator/AnimationCreatorPanel';
 import { AnimationSteps, AnimationController } from '../lib/Animation';
+import { HandleOperator, NodesSelectOperator, PointSelectOperator, VectorSelectOperator } from '../lib/Operator';
 import { AnimationContext } from '../Context/AnimationContext';
 import { getTreeData } from '../lib/functions';
 import AnimationStepGrid from './AnimationCreator/AnimationStepGrid';
@@ -21,6 +22,16 @@ export default class HoopsViewer extends Component {
     this.animationSteps = null;
     this.animationController = null;
 
+    this.pointSelectorOperator = null;
+    this.pointSelectorOperatorHandle = null;
+
+    this.handleOperator = null;
+    this.HandleOperatorHandle = null;
+    this.nodesSelectOperator = null;
+    this.nodesSelectOperatorHandle = null;
+    this.vectorSelectOperator = null;
+    this.vectorSelectOperatorHandle = null;
+
     this.state = {
       hwv: null,
       isStructureReady: false,
@@ -36,6 +47,18 @@ export default class HoopsViewer extends Component {
       this.animationSteps = new AnimationSteps(this.state.hwv);
       this.animationController = new AnimationController(this.state.hwv, this.animationSteps);
 
+      this.pointSelectorOperator = new PointSelectOperator(this.state.hwv);
+      this.pointSelectorOperatorHandle = this.state.hwv.operatorManager.registerCustomOperator(this.pointSelectorOperator);
+
+        // _this._handleOp = new HandleOperator(this.state.hwv, _this._animationSteps);
+        // _this._handleOpHandel = this.state.hwv.operatorManager.registerCustomOperator(_this._handleOp);
+        
+        this.nodesSelectOperator = new NodesSelectOperator(this.state.hwv, '');
+        this.nodesSelectOperatorHandle = this.state.hwv.operatorManager.registerCustomOperator(this.nodesSelectOperator);
+        
+        this.vectorSelectOperator = new VectorSelectOperator(this.state.hwv);
+        this.vectorSelectOperatorHandle = this.state.hwv.operatorManager.registerCustomOperator(this.vectorSelectOperator);
+
       this.state.hwv.setCallbacks({
         sceneReady: () => { },
         modelStructureReady: async () => {
@@ -44,6 +67,13 @@ export default class HoopsViewer extends Component {
           const [treeData, arrayData, pmiData] = modelTree;
           await hwv.model.setNodesVisibility(pmiData, false);
           await hwv.view.fitWorld();
+
+          // console.log(hwv);
+          
+
+          // hwv.operatorManager.push(this.pointSelectorOperatorHandle)
+          // hwv.operatorManager.push(this.nodesSelectOperatorHandle)
+          hwv.operatorManager.push(this.vectorSelectOperatorHandle)
 
           this.setState({
             isStructureReady: true,
